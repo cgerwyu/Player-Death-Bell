@@ -1,0 +1,10 @@
+{
+  "death_bell": {
+    "sounds": [
+      {
+        "name": "playerdeathbell:death_bell_sound",
+        "stream": true
+      }
+    ]
+  }
+}
