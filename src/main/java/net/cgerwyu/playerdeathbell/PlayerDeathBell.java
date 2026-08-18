@@ -2,6 +2,8 @@ package net.cgerwyu.playerdeathbell;
 
 import net.cgerwyu.playerdeathbell.ModSounds.ModSounds;
 import net.cgerwyu.playerdeathbell.command.PlayerDeathBellCommand;
+import net.cgerwyu.playerdeathbell.death.DeathCounterService;
+import net.cgerwyu.playerdeathbell.network.ModNetworking;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -13,6 +15,7 @@ import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 @Mod(PlayerDeathBell.MODID)
 public class PlayerDeathBell {
@@ -24,6 +27,7 @@ public class PlayerDeathBell {
             ModContainer modContainer
     ) {
         ModSounds.register(modEventBus);
+        ModNetworking.register(modEventBus);
 
         modContainer.registerConfig(
                 ModConfig.Type.SERVER,
@@ -35,12 +39,26 @@ public class PlayerDeathBell {
 
     @SubscribeEvent
     public void onPlayerDeath(LivingDeathEvent event) {
-        if (!Config.ENABLED.get()) {
-            return;
-        }
-
         if (event.getEntity() instanceof ServerPlayer deadPlayer) {
-            playDeathSoundForEveryone(deadPlayer);
+            DeathCounterService.recordDeath(deadPlayer);
+
+            if (Config.ENABLED.get()) {
+                playDeathSoundForEveryone(deadPlayer);
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            DeathCounterService.playerJoined(player);
+        }
+    }
+
+    @SubscribeEvent
+    public void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof ServerPlayer player) {
+            DeathCounterService.playerLeft(player);
         }
     }
 
